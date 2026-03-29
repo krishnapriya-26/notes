@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Notes Hub</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+
+  background: linear-gradient(rgba(245,246,250,0.9), rgba(245,246,250,0.9)),
+              url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f');
+
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* NAVBAR */
+.navbar {
+  background: #1e293b;
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* SUBJECT CARDS */
+.subjects {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.subject-card {
+  width: 260px;
+  margin: 15px;
+  padding: 20px;
+  border-radius: 15px;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+  transition: 0.3s;
+}
+
+.subject-card:hover {
+  transform: scale(1.05);
+}
+
+.ai { background: linear-gradient(to right,#4facfe,#00f2fe); }
+.crypto { background: linear-gradient(to right,#43e97b,#38f9d7); }
+.compiler { background: linear-gradient(to right,#fa709a,#fee140); }
+
+/* NOTES */
+.notes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  background: white;
+  width: 260px;
+  margin: 15px;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+button {
+  padding: 6px 10px;
+  background: #1e293b;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.search-box {
+  text-align: center;
+  margin: 20px;
+}
+
+h2 {
+  text-align: center;
+  margin-top: 40px;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <h2>📚 Notes Hub</h2>
+  <span>👀 User View</span>
+</div>
+
+<!-- SUBJECT CARDS -->
+<div class="subjects">
+  <div class="subject-card ai" onclick="filter('Artificial Intelligence')">AI</div>
+  <div class="subject-card crypto" onclick="filter('Cryptography')">Crypto</div>
+  <div class="subject-card compiler" onclick="filter('Compiler Design')">Compiler</div>
+</div>
+
+<div style="text-align:center;">
+  <button onclick="loadAll()">⬅ Back to All</button>
+</div>
+
+<!-- SEARCH -->
+<div class="search-box">
+  <input id="search" placeholder="Search..." onkeyup="searchNotes()">
+</div>
+
+<h2>📚 Notes</h2>
+<div class="notes" id="notes"></div>
+
+<h2>📌 Important Questions</h2>
+<div class="notes" id="important"></div>
+
+<script>
+let allData=[];
+
+/* LOAD DATA */
+function loadAll(){
+ fetch("/notes")
+ .then(res=>res.json())
+ .then(data=>{
+   allData=data;
+
+   show("note","notes");
+   show("important","important");
+ });
+}
+
+/* DISPLAY */
+function show(typeName, id){
+ let filtered = allData.filter(n=>n.type===typeName);
+
+ document.getElementById(id).innerHTML =
+ filtered.length > 0 
+ ? filtered.map(n=>`
+   <div class="card">
+     <h3>${n.title}</h3>
+     <p><b>${n.subject}</b></p>
+     <p>${n.description}</p>
+
+     ${n.file ? `
+       <button onclick="window.open('/uploads/${n.file}')">📄 Open</button>
+       <a href="/uploads/${n.file}" download>
+         <button>⬇ Download</button>
+       </a>
+     ` : ""}
+   </div>
+ `).join("")
+ : `<p>No data available</p>`;
+}
+
+/* FILTER */
+function filter(sub){
+ let filtered = allData.filter(n=>n.subject===sub);
+
+ document.getElementById("notes").innerHTML = filtered.map(n=>`
+   <div class="card">
+     <h3>${n.title}</h3>
+     <p>${n.description}</p>
+
+     ${n.file ? `<button onclick="window.open('/uploads/${n.file}')">Open</button>`:""}
+   </div>
+ `).join("");
+}
+
+/* SEARCH */
+function searchNotes(){
+ let t = search.value.toLowerCase();
+
+ let filtered = allData.filter(n=>n.title.toLowerCase().includes(t));
+
+ document.getElementById("notes").innerHTML = filtered.map(n=>`
+   <div class="card">
+     <h3>${n.title}</h3>
+     <p>${n.description}</p>
+   </div>
+ `).join("");
+}
+
+loadAll();
+</script>
+
+</body>
+</html>
