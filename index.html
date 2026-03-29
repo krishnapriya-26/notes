@@ -3,6 +3,13 @@
 <head>
 <title>Notes Hub</title>
 
+<script>
+// 🔥 LOGIN CHECK
+if(!localStorage.getItem("loggedIn")){
+  window.location.href = "login.html";
+}
+</script>
+
 <style>
 body {
   margin: 0;
@@ -12,8 +19,6 @@ body {
               url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f');
 
   background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
 }
 
 /* NAVBAR */
@@ -25,32 +30,25 @@ body {
   justify-content: space-between;
 }
 
-/* SUBJECT CARDS */
+/* SUBJECTS */
 .subjects {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 20px;
 }
 
 .subject-card {
-  width: 260px;
+  width: 250px;
   margin: 15px;
   padding: 20px;
-  border-radius: 15px;
+  border-radius: 12px;
   color: white;
   cursor: pointer;
-  text-align: center;
-  transition: 0.3s;
 }
 
-.subject-card:hover {
-  transform: scale(1.05);
-}
-
-.ai { background: linear-gradient(to right,#4facfe,#00f2fe); }
-.crypto { background: linear-gradient(to right,#43e97b,#38f9d7); }
-.compiler { background: linear-gradient(to right,#fa709a,#fee140); }
+.ai { background:#4facfe; }
+.crypto { background:#43e97b; }
+.compiler { background:#fa709a; }
 
 /* NOTES */
 .notes {
@@ -61,11 +59,10 @@ body {
 
 .card {
   background: white;
-  width: 260px;
+  width: 250px;
   margin: 15px;
   padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 10px;
 }
 
 button {
@@ -73,31 +70,23 @@ button {
   background: #1e293b;
   color: white;
   border: none;
-  cursor: pointer;
 }
 
 .search-box {
   text-align: center;
   margin: 20px;
 }
-
-h2 {
-  text-align: center;
-  margin-top: 40px;
-}
 </style>
-
 </head>
 
 <body>
 
-<!-- NAVBAR -->
 <div class="navbar">
   <h2>📚 Notes Hub</h2>
-  <span>👀 User View</span>
+  <button onclick="logout()">Logout</button>
 </div>
 
-<!-- SUBJECT CARDS -->
+<!-- SUBJECTS -->
 <div class="subjects">
   <div class="subject-card ai" onclick="filter('Artificial Intelligence')">AI</div>
   <div class="subject-card crypto" onclick="filter('Cryptography')">Crypto</div>
@@ -105,7 +94,7 @@ h2 {
 </div>
 
 <div style="text-align:center;">
-  <button onclick="loadAll()">⬅ Back to All</button>
+  <button onclick="loadAll()">⬅ Back</button>
 </div>
 
 <!-- SEARCH -->
@@ -113,60 +102,52 @@ h2 {
   <input id="search" placeholder="Search..." onkeyup="searchNotes()">
 </div>
 
-<h2>📚 Notes</h2>
+<h2 style="text-align:center;">📚 Notes</h2>
 <div class="notes" id="notes"></div>
 
-<h2>📌 Important Questions</h2>
+<h2 style="text-align:center;">📌 Important Questions</h2>
 <div class="notes" id="important"></div>
 
 <script>
 let allData=[];
 
-/* LOAD DATA */
+/* LOAD */
 function loadAll(){
- fetch("/notes")
+ fetch("http://localhost:3000/notes") // ⚠️ change if deployed
  .then(res=>res.json())
  .then(data=>{
    allData=data;
-
    show("note","notes");
    show("important","important");
  });
 }
 
 /* DISPLAY */
-function show(typeName, id){
- let filtered = allData.filter(n=>n.type===typeName);
-
+function show(type,id){
  document.getElementById(id).innerHTML =
- filtered.length > 0 
- ? filtered.map(n=>`
+ allData.filter(n=>n.type===type).map(n=>`
    <div class="card">
      <h3>${n.title}</h3>
-     <p><b>${n.subject}</b></p>
+     <p>${n.subject}</p>
      <p>${n.description}</p>
 
      ${n.file ? `
-       <button onclick="window.open('/uploads/${n.file}')">📄 Open</button>
-       <a href="/uploads/${n.file}" download>
-         <button>⬇ Download</button>
+       <button onclick="window.open('http://localhost:3000/uploads/${n.file}')">Open</button>
+       <a href="http://localhost:3000/uploads/${n.file}" download>
+         <button>Download</button>
        </a>
-     ` : ""}
+     `:""}
    </div>
- `).join("")
- : `<p>No data available</p>`;
+ `).join("");
 }
 
 /* FILTER */
 function filter(sub){
- let filtered = allData.filter(n=>n.subject===sub);
-
- document.getElementById("notes").innerHTML = filtered.map(n=>`
+ notes.innerHTML = allData.filter(n=>n.subject===sub)
+ .map(n=>`
    <div class="card">
      <h3>${n.title}</h3>
      <p>${n.description}</p>
-
-     ${n.file ? `<button onclick="window.open('/uploads/${n.file}')">Open</button>`:""}
    </div>
  `).join("");
 }
@@ -174,15 +155,19 @@ function filter(sub){
 /* SEARCH */
 function searchNotes(){
  let t = search.value.toLowerCase();
-
- let filtered = allData.filter(n=>n.title.toLowerCase().includes(t));
-
- document.getElementById("notes").innerHTML = filtered.map(n=>`
+ notes.innerHTML = allData.filter(n=>n.title.toLowerCase().includes(t))
+ .map(n=>`
    <div class="card">
      <h3>${n.title}</h3>
      <p>${n.description}</p>
    </div>
  `).join("");
+}
+
+/* LOGOUT */
+function logout(){
+ localStorage.removeItem("loggedIn");
+ window.location.href = "login.html";
 }
 
 loadAll();
